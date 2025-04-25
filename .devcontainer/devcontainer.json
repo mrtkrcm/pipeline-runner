@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "build": "poetry install && poetry run pre-commit install",
+    "test": "pipx install rust-just && just test"
+  }
+}

@@ -548,6 +548,33 @@ def test_warning_is_emitted_if_oidc_is_enabled(caplog: LogCaptureFixture) -> Non
     assert "Ignoring OIDC flag on step: Test step with oidc" in caplog.text
 
 
+def test_custom_cache_definition_with_key_and_path(project_cache_directory: Path, custom_cache_key_file: Path, faker: Faker) -> None:
+    runner = PipelineRunner(PipelineRunRequest("custom.test_custom_cache_definition_with_key_and_path"))
+    cache_name = "bundler-packages"
+
+    file_data = faker.pystr()
+    custom_cache_key_file.write_text(file_data)
+    expected_hash = _sha256hash(file_data.encode())
+
+    result = runner.run()
+    assert result.ok
+
+    assert (project_cache_directory / f"{cache_name}-{expected_hash}.tar").exists()
+
+    # Updating the key file should create a new cache
+    file_data = faker.pystr()
+    custom_cache_key_file.write_text(file_data)
+    expected_hash = _sha256hash(file_data.encode())
+
+    # Clear the lru cache to simulate an entirely new run.
+    compute_cache_key.cache_clear()
+
+    result = runner.run()
+    assert result.ok
+
+    assert (project_cache_directory / f"{cache_name}-{expected_hash}.tar").exists()
+
+
 def _sha256hash(data: bytes) -> str:
     hasher = hashlib.sha256()
     hasher.update(data)

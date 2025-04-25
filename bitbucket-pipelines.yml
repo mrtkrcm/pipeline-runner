@@ -1,7 +1,13 @@
 definitions:
   caches:
-    service1: ~/.cache/service1
-    invalid: $HOME/.cache/non-existing-folder
+    service1:
+      key:
+        files: ["service1-key"]
+      path: ~/.cache/service1
+    invalid:
+      key:
+        files: ["invalid-key"]
+      path: $HOME/.cache/non-existing-folder
     custom:
       key:
         files: ["custom-cache-key"]
@@ -175,7 +181,7 @@ pipelines:
           name: Validate Artifacts
           script:
             - "[ -e file-a.txt ] || exit 1"
-            - "[ -e file-b.txt ] || exit 1"
+            - "[ - e file-b.txt ] || exit 1"
             - exit 0
       - step:
           name: Validate disable artifact download
