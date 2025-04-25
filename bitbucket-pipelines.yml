@@ -1,27 +1,22 @@
 definitions:
   caches:
-    service1: ~/.cache/service1
-    invalid: $HOME/.cache/non-existing-folder
+    service1:
+      key:
+        files: ["service1-key"]
+      path: ~/.cache/service1
+    invalid:
+      key:
+        files: ["invalid-key"]
+      path: $HOME/.cache/non-existing-folder
     custom:
       key:
         files: ["custom-cache-key"]
       path: ~/.cache/custom
-    bundler-packages:
-      key:
-        files:
-          - vendor/bundle
-      path: vendor/bundle
   services:
     postgres:
       image: postgres:alpine
       variables:
         POSTGRES_HOST_AUTH_METHOD: trust
-    my-mariadb:
-      image: mariadb:latest
-      variables:
-        MARIADB_USER: $MY_MARIADB_USER
-        MARIADB_PASSWORD: $MY_MARIADB_PASSWORD
-        MARIADB_ROOT_PASSWORD: $MY_MARIADB_ADMIN_PASSWORD
 
 image: alpine
 
@@ -155,15 +150,15 @@ pipelines:
           script:
             - ls -R
             - "[ -e valid-folder/a ] || exit 1"
-            - "[ - e valid-folder/b ] || exit 1"
-            - "[ - e valid-folder/sub/c ] || exit 1"
-            - "[ - e file-name ] || exit 1"
+            - "[ -e valid-folder/b ] || exit 1"
+            - "[ -e valid-folder/sub/c ] || exit 1"
+            - "[ -e file-name ] || exit 1"
 
-            - "[ - e ~/artifact-in-home ] && exit 1"
-            - "[ - d valid-folder/sub/sub ] && exit 1"
-            - "[ - d invalid-folder ] && exit 1"
-            - "[ - d folder-name ] && exit 1"
-            - "[ - d root ] && exit 1"
+            - "[ -e ~/artifact-in-home ] && exit 1"
+            - "[ -d valid-folder/sub/sub ] && exit 1"
+            - "[ -d invalid-folder ] && exit 1"
+            - "[ -d folder-name ] && exit 1"
+            - "[ -d root ] && exit 1"
             - exit 0
       - step:
           name: Test no artifacts to save
@@ -185,7 +180,7 @@ pipelines:
       - step:
           name: Validate Artifacts
           script:
-            - "[ - e file-a.txt ] || exit 1"
+            - "[ -e file-a.txt ] || exit 1"
             - "[ - e file-b.txt ] || exit 1"
             - exit 0
       - step:
@@ -194,8 +189,8 @@ pipelines:
             download: false
           script:
             # Artifacts should _not_ be present in that container
-            - "[ - e file-a.txt ] && exit 1"
-            - "[ - e file-b.txt ] && exit 1"
+            - "[ -e file-a.txt ] && exit 1"
+            - "[ -e file-b.txt ] && exit 1"
             - exit 0
 
     test_deployment_environment:
@@ -421,23 +416,3 @@ pipelines:
           oidc: true
           script:
             - "echo a"
-
-    test_custom_cache_definition_with_key_and_path:
-      - step:
-          name: Test Custom Cache Definition with Key and Path
-          caches:
-            - bundler-packages
-          script:
-            - export CACHE_DIR=vendor/bundle
-            - mkdir -p "${CACHE_DIR}"
-            - dd if=/dev/random of=${CACHE_DIR}/file bs=2048 count=1
-
-  default:
-    - step:
-        name: Hello world example
-        services:
-          - my-mariadb
-        caches:
-          - bundler-packages
-        script:
-          - ruby -e 'print "Hello, World\n"'
